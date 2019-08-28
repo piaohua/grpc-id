@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+
+// The generate IDs service definition.
+service ID {
+    // Sends a id
+    rpc GetSnowflake (SnowflakeRequest) returns (SnowflakeReply) {
+        option (google.api.http) = {
+            post: "/snowflake"
+            body: "*"
+        };
+    }
+    rpc GetSonyflake (SonyflakeRequest) returns (SonyflakeReply) {
+        option (google.api.http) = {
+            post: "/sonyflake"
+            body: "*"
+        };
+    }
+}
+
+// The request message containing the user's name.
+message SnowflakeRequest {
+    string name = 1;
+}
+
+// The response message containing the snowflake id
+message SnowflakeReply {
+    uint64 id = 1;
+    int64 time = 2;
+    uint64 node = 3;
+    uint64 sequence = 4;
+}
+
+// The request message containing the user's name.
+message SonyflakeRequest {
+    string name = 1;
+}
+
+// The response message containing the sonyflake id
+message SonyflakeReply {
+    uint64 id = 1;
+    uint64 time = 2;
+    uint64 machine = 3;
+    uint64 sequence = 4;
+    uint64 msb = 5;
+}

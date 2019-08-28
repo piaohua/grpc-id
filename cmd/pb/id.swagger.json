@@ -1,0 +1,140 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "id.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/snowflake": {
+      "post": {
+        "summary": "Sends a id",
+        "operationId": "GetSnowflake",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbSnowflakeReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbSnowflakeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ID"
+        ]
+      }
+    },
+    "/sonyflake": {
+      "post": {
+        "operationId": "GetSonyflake",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbSonyflakeReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbSonyflakeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ID"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pbSnowflakeReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "time": {
+          "type": "string",
+          "format": "int64"
+        },
+        "node": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sequence": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "The response message containing the snowflake id"
+    },
+    "pbSnowflakeRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "The request message containing the user's name."
+    },
+    "pbSonyflakeReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "time": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "machine": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sequence": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "msb": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "The response message containing the sonyflake id"
+    },
+    "pbSonyflakeRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "The request message containing the user's name."
+    }
+  }
+}

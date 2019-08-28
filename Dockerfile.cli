@@ -1,0 +1,14 @@
+#FROM grpc-id/bin:latest AS builder
+
+ARG IMAGE_BASE="alpine"
+ARG IMAGE_TAG="3.10.1"
+FROM ${IMAGE_BASE}:${IMAGE_TAG}
+#COPY --from=builder /go/bin/cli /bin/cli
+ENV GRPC_GO_LOG_VERBOSITY_LEVEL=99 GRPC_GO_LOG_SEVERITY_LEVEL=info
+COPY cmd/cli/cli /bin/cli
+ARG PORT=60002
+EXPOSE ${PORT}/tcp
+ENTRYPOINT ["/bin/cli", "-reg", "http://etcd-server:2379"]
+# Docker Build Arguments
+ARG CREATE_AT
+LABEL Name=grpc-id-cli Version=0.1 Description="this is grpc-id cli" CreateBy="phil.wang" CreateAt="${CREATE_AT}"

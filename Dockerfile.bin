@@ -1,0 +1,41 @@
+ARG IMAGE_BASE="golang"
+ARG IMAGE_TAG="1.12.7-alpine"
+FROM ${IMAGE_BASE}:${IMAGE_TAG}
+
+ENV GO111MODULE=off
+ENV GOPROXY=https://goproxy.io
+ENV GOPATH=/go
+
+ENV GRPC_ID=github.com/piaohua/grpc-id
+ENV GRPC_ID_ROOT=${GOPATH}/src/github.com/piaohua/grpc-id
+ENV GRPC_ID_TAG="master"
+ENV GOGOPROTO_ROOT=${GOPATH}/src/github.com/gogo/protobuf
+ENV GRPC_GATEWAY_ROOT=${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway
+
+WORKDIR /go/src
+
+COPY cmd /go/src/${GRPC_ID}/cmd
+COPY etcdv3 /go/src/${GRPC_ID}/etcdv3
+COPY go.mod /go/src/${GRPC_ID}/go.mod
+COPY go.sum /go/src/${GRPC_ID}/go.sum
+
+RUN sed -i -e 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories && \
+    apk --update add --no-cache --virtual dependency git protobuf=3.6.1-r1 && \
+    # source
+    #go get -d -u ${GRPC_ID} && \
+    #git -C "$(go env GOPATH)"/src/${GRPC_ID} reset --hard "${GRPC_ID_TAG}" && \
+    # generate pb
+    cd ${GRPC_ID_ROOT}/cmd/pb && \
+    go get -v && \
+    /usr/bin/protoc -I".:${GOGOPROTO_ROOT}/protobuf:${GRPC_GATEWAY_ROOT}/third_party/googleapis" ./*.proto --go_out=plugins=grpc:. && \
+    /usr/bin/protoc -I".:${GOGOPROTO_ROOT}/protobuf:${GRPC_GATEWAY_ROOT}/third_party/googleapis" ./*.proto --swagger_out=logtostderr=true:. --grpc-gateway_out=logtostderr=true:. && \
+    cd ${GRPC_ID_ROOT}/cmd/svr && \
+    go get -v && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o ${GOPATH}/bin/svr . && \
+    cd ${GRPC_ID_ROOT}/cmd/gw && \
+    go get -v && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o ${GOPATH}/bin/gw . && \
+    cd ${GRPC_ID_ROOT}/cmd/cli && \
+    go get -v && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o ${GOPATH}/bin/cli . && \
+    apk del dependency

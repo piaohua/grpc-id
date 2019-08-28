@@ -1,0 +1,217 @@
+version: "3.6"
+
+services:
+    etcd01:
+        container_name: etcd01
+        image: registry.cn-hangzhou.aliyuncs.com/coreos_etcd/etcd:v3
+        expose:
+            - 2379
+            - 2380
+            - 4001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.2
+        volumes:
+            - etcd01-data:/etcd-data
+        restart: always
+        environment:
+            - ETCDCTL_API=3
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            - /usr/local/bin/etcd
+            - --name=etcd01 
+            - --data-dir=/etcd-data
+            - --advertise-client-urls=http://etcd01:2379,http://etcd01:4001
+            - --listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001
+            - --initial-advertise-peer-urls=http://etcd01:2380
+            - --listen-peer-urls=http://0.0.0.0:2380 
+            - --initial-cluster-token=etcd-cluster 
+            - --initial-cluster=etcd01=http://etcd01:2380,etcd02=http://etcd02:2380,etcd03=http://etcd03:2380
+            - --initial-cluster-state=new 
+            - --heartbeat-interval=250
+            - --election-timeout=1250
+        labels:
+            - project.source=
+            - project.extra=public-image
+            - project.depends=
+            - project.owner=LHZ
+
+    etcd02:
+        container_name: etcd02
+        image: registry.cn-hangzhou.aliyuncs.com/coreos_etcd/etcd:v3
+        expose:
+            - 2379
+            - 2380
+            - 4001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.3
+        volumes:
+            - etcd02-data:/etcd-data
+        restart: always
+        environment:
+            - ETCDCTL_API=3
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /usr/local/bin/etcd
+            -name etcd02 
+            -data-dir /etcd-data
+            -advertise-client-urls http://etcd02:2379,http://etcd02:4001
+            -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001
+            -initial-advertise-peer-urls http://etcd02:2380
+            -listen-peer-urls http://0.0.0.0:2380 
+            -initial-cluster-token etcd-cluster 
+            -initial-cluster etcd01=http://etcd01:2380,etcd02=http://etcd02:2380,etcd03=http://etcd03:2380
+            -initial-cluster-state new 
+            -heartbeat-interval 250
+            -election-timeout 1250
+        labels:
+            - project.source=
+            - project.extra=public-image
+            - project.depends=
+            - project.owner=LHZ
+
+    etcd03:
+        container_name: etcd03
+        image: registry.cn-hangzhou.aliyuncs.com/coreos_etcd/etcd:v3
+        expose:
+            - 2379
+            - 2380
+            - 4001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.4
+        volumes:
+            - etcd03-data:/etcd-data
+        restart: always
+        environment:
+            - ETCDCTL_API=3
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+            - ETCD_NAME=etcd03
+            - ETCD_DATA_DIR=/etcd-data
+            - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+            - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001
+            - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd03:2380
+            - ETCD_INITIAL_CLUSTER=etcd01=http://etcd01:2380,etcd02=http://etcd02:2380,etcd03=http://etcd03:2380
+            - ETCD_INITIAL_CLUSTER_STATE=new
+            - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
+            - ETCD_ADVERTISE_CLIENT_URLS=http://etcd03:2379,http://etcd03:4001
+            - ETCD_HEARTBEAT_INTERVAL=250
+            - ETCD_ELECTION_TIMEOUT=1250
+        command: 
+            /usr/local/bin/etcd
+        labels:
+            - project.source=
+            - project.extra=public-image
+            - project.depends=
+            - project.owner=LHZ
+
+    svr01:
+        container_name: grpc_id_svr_01
+        image: grpc-id/svr:0.2
+        expose:
+            - 50001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.100
+        restart: always
+        environment:
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /bin/svr -host 172.16.0.100 -port 50001 -reg http://etcd01:2379,http://etcd02:2379,http://etcd03:2379
+        depends_on:
+            - etcd01
+            - etcd02
+            - etcd03
+
+    svr02:
+        container_name: grpc_id_svr_02
+        image: grpc-id/svr:0.2
+        expose:
+            - 50001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.101
+        restart: always
+        environment:
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /bin/svr -host 172.16.0.101 -port 50001 -reg http://etcd01:2379,http://etcd02:2379,http://etcd03:2379
+        depends_on:
+            - etcd01
+            - etcd02
+            - etcd03
+
+    svr03:
+        container_name: grpc_id_svr_03
+        image: grpc-id/svr:0.2
+        expose:
+            - 50001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.102
+        restart: always
+        environment:
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /bin/svr -host 172.16.0.102 -port 50001 -reg http://etcd01:2379,http://etcd02:2379,http://etcd03:2379
+        depends_on:
+            - etcd01
+            - etcd02
+            - etcd03
+
+    gw01:
+        container_name: grpc_id_gw_01
+        image: grpc-id/gw:0.2
+        ports:
+            - 60001:60001
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.103
+        restart: always
+        environment:
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /bin/gw -host 172.16.0.103 -port 60001 -reg http://etcd01:2379,http://etcd02:2379,http://etcd03:2379
+        depends_on:
+            - svr01
+            - svr02
+            - svr03
+
+    cli01:
+        container_name: grpc_id_cli_01
+        image: grpc-id/cli:0.2
+        networks:
+            cluster_net:
+                ipv4_address: 172.16.0.104
+        restart: always
+        environment:
+            - TZ=CST-8
+            - LANG=zh_CN.UTF-8
+        command: 
+            /bin/cli -reg http://etcd01:2379,http://etcd02:2379,http://etcd03:2379
+        depends_on:
+            - svr01
+            - svr02
+            - svr03
+
+volumes:
+    etcd01-data:
+    etcd02-data:
+    etcd03-data:
+
+networks:
+    cluster_net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+            -
+                subnet: 172.16.0.0/24
